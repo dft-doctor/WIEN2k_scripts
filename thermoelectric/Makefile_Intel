@@ -1,0 +1,66 @@
+SHELL = /bin/sh
+
+# gfortran
+#FC = gfortran
+#FC = gfortran-mp-4.5
+
+#FOPT  = -g -march=native -funroll-loops -O3 -ffast-math -fgcse-lm -fgcse-sm -ffast-math -ftree-vectorize -fexternal-blas
+#FOPT += -g -p -pg -Wall -fbounds-check -finit-integer=-666 -finit-real=nan
+#LDFLAGS =
+#LIBS = -llapack -lblas
+
+# ifort
+FC = ifort
+FOPT = -FR -mp1 -w -prec_div -pc80 -pad -ip -DINTEL_VML
+
+#LDFLAGS = -L/opt/intel/mkl/10.0.1.014/lib/32/ -Vaxlib -static-libcxa -pthread
+#LIBS = -lmkl_lapack -lmkl_ia32 -lguide
+# ifort bis: other mkl options
+#LDFLAGS = $(FOPT) -L/opt/intel/mkl/10.0.1.014/lib/32 -pthread -i-static
+#LIBS = -lmkl_lapack -lmkl -lguide
+#LDFLAGS = $(FOPT) -L/cluster/intel/Compiler/11.1/046/mkl/lib/em64t -pthread -i-static
+LIBS = -lmkl_lapack95_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -openmp -lpthread
+
+# generic
+LINKER  =       $(FC)
+LFLAGS  = -g #-pg
+FGEN = 
+DESTDIR = .
+
+EXECNAME = BoltzTraP
+
+###############################################################################
+
+FFLAGS = $(FGEN) $(FOPT)
+EXEC = $(DESTDIR)/$(EXECNAME)
+
+#..............................................................................
+#
+#  Object files common to both REAL and COMPLEX type subroutines
+#
+OBJS = gmlib2.o reallocate.o \
+     m_bandstructure.o m_input.o m_fermimod.o \
+     m_interfaces.o \
+     latgen2.o generic_field.o gtfnam.o gen_lattpoints.o \
+     BoltzTraP.o crystal_band.o wien_band.o phon_band.o generic_band.o pw_interface.o \
+     add_inv.o bandana.o stern1.o kdelta.o fite4.o sortag.o gplbands.o \
+     dos.o ifflim.o setfft.o c3fft.o boseintegrals.o fermiintegrals.o bands.o kcomp.o \
+     bz.o fermisurface.o setfft2.o write_dx_fs.o write_dx_bz.o write_cube_fs.o \
+     dos_histogram.o dos_tetra.o noculc.o dosvv.o readvv.o \
+     phonondrag.o
+#OBJS =	\
+#        reallocate.o defs.o modules.o broad.o add_inv.o \
+#        c3fft.o gtfnam.o ifflim.o mknam.o read_energy.o \
+#        transport.o stern.o kdelta.o gen_lattpoints.o fite4.o setfft.o \
+#        starfkt2.o dos.o 
+
+$(EXEC): $(OBJS)
+	$(LINKER) $(LFLAGS) -o $(EXEC) $(OBJS) $(LDFLAGS) $(LIBS) $(LFLAGS)
+
+
+clean:
+	rm -f *.o *.mod *.pc *.pcl *~
+
+.SUFFIXES: .F90 .o 
+.F90.o:
+	$(FC) $(FFLAGS) -c $<
